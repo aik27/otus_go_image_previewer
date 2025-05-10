@@ -12,7 +12,7 @@ import (
 
 func TestCache(t *testing.T) {
 	t.Run("empty cache", func(t *testing.T) {
-		c := NewCache(10)
+		c := NewCache(10, nil)
 
 		_, ok := c.Get("aaa")
 		require.False(t, ok)
@@ -22,7 +22,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("simple", func(t *testing.T) {
-		c := NewCache(5)
+		c := NewCache(5, nil)
 
 		wasInCache := c.Set("aaa", 100)
 		require.False(t, wasInCache)
@@ -51,7 +51,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("Capacity exceeded", func(t *testing.T) {
-		c := NewCache(5)
+		c := NewCache(5, nil)
 		for i := 0; i < 10; i++ {
 			c.Set(Key(strconv.Itoa(i)), i)
 		}
@@ -63,7 +63,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("Evict less used elements", func(t *testing.T) {
-		c := NewCache(5)
+		c := NewCache(5, nil)
 		for i := 0; i < 5; i++ {
 			c.Set(Key(strconv.Itoa(i)), i)
 		}
@@ -86,7 +86,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("Clear cache", func(t *testing.T) {
-		c := NewCache(5)
+		c := NewCache(5, nil)
 		for i := 0; i < 5; i++ {
 			c.Set(Key(strconv.Itoa(i)), i)
 		}
@@ -101,7 +101,7 @@ func TestCache(t *testing.T) {
 }
 
 func TestCacheMultithreading(t *testing.T) { //nolint
-	c := NewCache(10)
+	c := NewCache(10, nil)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
@@ -115,7 +115,7 @@ func TestCacheMultithreading(t *testing.T) { //nolint
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000; i++ {
-			c.Get(Key(strconv.Itoa(rand.Intn(1_000))))
+			c.Get(Key(strconv.Itoa(rand.Intn(1_000)))) //nolint:gosec
 		}
 	}()
 

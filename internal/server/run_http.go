@@ -10,19 +10,20 @@ import (
 	"sync"
 	"time"
 
+	lrucache "github.com/aik27/otus_go_image_previewer/internal/cache/lru"
 	"github.com/aik27/otus_go_image_previewer/internal/config"
 	"github.com/aik27/otus_go_image_previewer/internal/routes"
 )
 
-func RunHTTP(ctx context.Context, cnf *config.Config, wg *sync.WaitGroup) {
-	listenAddrPort := fmt.Sprintf("%s:%d", cnf.HTTPServer.ListenAddr, cnf.HTTPServer.ListenPort)
+func RunHTTP(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, cache lrucache.Cache) {
+	listenAddrPort := fmt.Sprintf("%s:%d", cfg.HTTPServer.ListenAddr, cfg.HTTPServer.ListenPort)
 
 	server := &http.Server{
 		Addr:         listenAddrPort,
-		Handler:      routes.ChiRouter(),
-		ReadTimeout:  time.Duration(cnf.HTTPServer.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(cnf.HTTPServer.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(cnf.HTTPServer.IdleTimeout) * time.Second,
+		Handler:      routes.ChiRouter(ctx, cfg, cache),
+		ReadTimeout:  time.Duration(cfg.HTTPServer.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.HTTPServer.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(cfg.HTTPServer.IdleTimeout) * time.Second,
 	}
 
 	go func(ctx context.Context) {

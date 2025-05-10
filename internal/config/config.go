@@ -12,7 +12,6 @@ var (
 	once     sync.Once
 )
 
-//goland:noinspection ALL
 type Config struct {
 	App struct {
 		Name     string `env:"APP_NAME" validate:"required"`
@@ -23,10 +22,15 @@ type Config struct {
 
 	HTTPServer struct {
 		ListenAddr   string `env:"HTTP_SERVER_LISTEN_ADDR" validate:"required,ip"`
-		ListenPort   int32  `env:"HTTP_SERVER_LISTEN_PORT" validate:"required,numeric"`
-		ReadTimeout  int32  `env:"HTTP_SERVER_READ_TIMEOUT" validate:"required,numeric"`
-		WriteTimeout int32  `env:"HTTP_SERVER_WRITE_TIMEOUT" validate:"required,numeric"`
-		IdleTimeout  int32  `env:"HTTP_SERVER_IDLE_TIMEOUT" validate:"required,numeric"`
+		ListenPort   int    `env:"HTTP_SERVER_LISTEN_PORT" validate:"required,numeric"`
+		ReadTimeout  int    `env:"HTTP_SERVER_READ_TIMEOUT" validate:"required,numeric"`
+		WriteTimeout int    `env:"HTTP_SERVER_WRITE_TIMEOUT" validate:"required,numeric"`
+		IdleTimeout  int    `env:"HTTP_SERVER_IDLE_TIMEOUT" validate:"required,numeric"`
+	}
+
+	Cache struct {
+		Dir      string `env:"CACHE_DIR" validate:"required"`
+		Capacity int    `env:"CACHE_CAPACITY" validate:"required,numeric"`
 	}
 }
 

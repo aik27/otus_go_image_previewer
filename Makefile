@@ -1,4 +1,4 @@
-LDFLAGS := ""
+LDFLAGS :=
 
 build:
 	docker compose build --build-arg LDFLAGS="$(LDFLAGS)"

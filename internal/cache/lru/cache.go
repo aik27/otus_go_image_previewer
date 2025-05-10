@@ -1,12 +1,21 @@
 package lrucache
 
-import "sync"
+import (
+	"sync"
+)
 
 type Key string
 
-type cacheItem struct {
-	key   Key
-	value interface{}
+type CacheItem struct {
+	Key   Key
+	Value interface{}
+}
+
+type ImageItem struct {
+	FilePath    string
+	Width       int
+	Height      int
+	OriginalURL string
 }
 
 type Cache interface {
@@ -16,17 +25,19 @@ type Cache interface {
 }
 
 type lruCache struct {
-	mu       sync.Mutex
-	capacity int               // Количество сохраняемых в кэше элементов.
-	queue    List              // Очередь на основе двусвязного списка.
-	items    map[Key]*ListItem // Словарь, отображающий ключ (строка) на элемент очереди.
+	mu        sync.Mutex
+	capacity  int                   // Количество сохраняемых в кэше элементов.
+	queue     List                  // Очередь на основе двусвязного списка.
+	items     map[Key]*ListItem     // Словарь, отображающий ключ (строка) на элемент очереди.
+	onEvicted func(item *CacheItem) // Функция обратного вызова при удалении элемента из кэша.
 }
 
-func NewCache(capacity int) Cache {
+func NewCache(capacity int, onEvicted func(item *CacheItem)) Cache {
 	return &lruCache{
-		capacity: capacity,
-		queue:    NewList(),
-		items:    make(map[Key]*ListItem, capacity),
+		capacity:  capacity,
+		queue:     NewList(),
+		items:     make(map[Key]*ListItem, capacity),
+		onEvicted: onEvicted,
 	}
 }
 
@@ -37,18 +48,22 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 
 	item, ok := c.items[key]
 	if ok {
-		item.Value.(*cacheItem).value = value
+		item.Value.(*CacheItem).Value = value
 		c.queue.MoveToFront(item)
 		return true
 	}
 
-	newItem := &cacheItem{key: key, value: value}
+	newItem := &CacheItem{Key: key, Value: value}
 	c.items[key] = c.queue.PushFront(newItem)
 
 	if c.queue.Len() > c.capacity {
 		backItem := c.queue.Back()
-		delete(c.items, backItem.Value.(*cacheItem).key)
+		delete(c.items, backItem.Value.(*CacheItem).Key)
 		c.queue.Remove(backItem)
+
+		if c.onEvicted != nil {
+			c.onEvicted(backItem.Value.(*CacheItem))
+		}
 	}
 
 	return false
@@ -62,7 +77,7 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	item, ok := c.items[key]
 	if ok {
 		c.queue.MoveToFront(item)
-		return item.Value.(*cacheItem).value, true
+		return item.Value.(*CacheItem).Value, true
 	}
 	return nil, false
 }
