@@ -38,13 +38,11 @@ func Load() *Config {
 	var cfg Config
 
 	if err := cleanenv.ReadConfig(".env", &cfg); err != nil {
-		// @TODO output message in log format (we dont have struct logger at this point)
 		panic("Config read error: " + err.Error())
 	}
 
 	validate := validator.New()
 	if err := validate.Struct(&cfg); err != nil {
-		// @TODO output message in log format (we dont have struct logger at this point)
 		panic("Config validation error: " + err.Error())
 	}
 

@@ -21,7 +21,6 @@ func SetupLogger(cnf *config.Config) {
 	case "error":
 		logLevel = slog.LevelError
 	default:
-		// @TODO output message in log format (we dont have struct logger at this point)
 		panic("invalid log level")
 	}
 
