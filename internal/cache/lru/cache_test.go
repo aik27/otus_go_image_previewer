@@ -1,7 +1,9 @@
 package lrucache
 
 import (
+	"fmt"
 	"math/rand"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -120,4 +122,35 @@ func TestCacheMultithreading(t *testing.T) { //nolint
 	}()
 
 	wg.Wait()
+}
+
+func TestCacheWithEvents(t *testing.T) {
+	t.Run("OnEvictedEvent", func(t *testing.T) {
+		c := NewCache(5, OnEvictedEvent)
+		for i := 0; i < 10; i++ {
+			savePath := fmt.Sprintf("%s/%d.txt", os.TempDir(), i)
+			file, err := os.Create(savePath)
+			assert.NoError(t, err, "File \"%s\" should be created", savePath)
+
+			_, err = file.WriteString("Hello World")
+			assert.NoError(t, err, "File \"%s\" should be written", savePath)
+
+			cached := ImageItem{
+				FilePath:    savePath,
+				Width:       1,
+				Height:      1,
+				OriginalURL: "test",
+			}
+			c.Set(Key(strconv.Itoa(i)), cached)
+		}
+
+		for i := 0; i < 5; i++ {
+			_, ok := c.Get(Key(strconv.Itoa(i)))
+			assert.False(t, ok, "Element with key \"%d\" still exist.", i)
+
+			savePath := fmt.Sprintf("%s/%d.jpg", os.TempDir(), i)
+			_, err := os.Open(savePath)
+			assert.Error(t, err, "File \"%s\" should be deleted", savePath)
+		}
+	})
 }
