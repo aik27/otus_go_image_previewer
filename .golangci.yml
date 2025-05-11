@@ -66,6 +66,8 @@ linters:
             - github.com/go-chi/chi/v5/middleware
             - github.com/go-chi/render
             - github.com/disintegration/imaging
+            - github.com/testcontainers/testcontainers-go
+            - github.com/testcontainers/testcontainers-go/wait
         Test:
           files:
             - $test

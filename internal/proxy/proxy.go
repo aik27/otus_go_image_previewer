@@ -42,7 +42,7 @@ func (p *Client) newHTTPRequest(url string, r *http.Request) *http.Request {
 
 func (p *Client) FetchFile(url string, r *http.Request) ([]byte, error) {
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = fmt.Sprintf("https://%s", url)
+		url = fmt.Sprintf("http://%s", url)
 	}
 
 	req := p.newHTTPRequest(url, r)

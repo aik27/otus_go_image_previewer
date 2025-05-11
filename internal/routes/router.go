@@ -16,6 +16,11 @@ func ChiRouter(ctx context.Context, cfg *config.Config, cache lrucache.Cache) *c
 
 	rootRouter.Use(middleware.StripSlashes)
 
+	rootRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		_ = r
+		w.WriteHeader(http.StatusOK)
+	})
+
 	rootRouter.Get("/fill/{width}/{height}/*", func(w http.ResponseWriter, r *http.Request) {
 		handlers.FillHandler(ctx, cfg, cache, w, r)
 	})
