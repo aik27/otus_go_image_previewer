@@ -17,7 +17,7 @@ RUN export GOPATH=$PWD/.cache && \
 FROM alpine:3.21
 
 COPY --from=builder /app/server /app/server
-COPY --from=builder /app/.env /app/.env
+COPY --from=builder /app/.env.example /app/.env
 COPY --from=builder /app/tmp /app/tmp
 
 WORKDIR /app
