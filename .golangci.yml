@@ -73,6 +73,8 @@ linters:
             - $gostd
             - github.com/stretchr/testify
             - github.com/aik27/otus_go_image_previewer
+            - github.com/testcontainers/testcontainers-go
+            - github.com/testcontainers/testcontainers-go/wait
   exclusions:
     generated: lax
     presets:

@@ -21,7 +21,7 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1.5
-  tests:
+  unit_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
@@ -33,4 +33,17 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Unit tests
-        run: go test -race -count 100 -v -timeout=1m ./...
+        run: go test -short -race -count 100 -v -timeout=1m ./...
+    integration_tests:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Set up Go
+          uses: actions/setup-go@v3
+          with:
+            go-version: ^1.24
+
+        - name: Check out code
+          uses: actions/checkout@v3
+
+        - name: Unit tests
+          run: go test -tags=integration -v ./...

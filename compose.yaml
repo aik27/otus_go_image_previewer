@@ -6,7 +6,7 @@ services:
     hostname: otus_image_previewer_app
     container_name: otus_image_previewer_app
     networks:
-      - otus_network
+      - otus_image_previewer_network
     ports:
       - "$HTTP_SERVER_LISTEN_PORT:$HTTP_SERVER_LISTEN_PORT"
 
@@ -15,7 +15,7 @@ services:
     hostname: otus_image_previewer_nginx
     container_name: otus_image_previewer_nginx
     networks:
-      - otus_network
+      - otus_image_previewer_network
     ports:
       - "9094:80"
     volumes:
@@ -24,6 +24,6 @@ services:
       - .docker/nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
 
 networks:
-  otus_network:
-    name: otus_network
-    external: true
+  otus_image_previewer_network:
+    name: otus_image_previewer_network
+    driver: bridge
