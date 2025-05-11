@@ -91,7 +91,7 @@ func FillHandler(
 		return
 	}
 
-	savePath := fmt.Sprintf("%s/%s", cfg.Cache.Dir, filemanager.GetFileNameByURL(imgURL))
+	savePath := fmt.Sprintf("%s/%s_%s_%s", cfg.Cache.Dir, width, height, filemanager.GetFileNameByURL(imgURL))
 
 	err = filemanager.SaveFile(savePath, image)
 	if err != nil {
@@ -111,6 +111,7 @@ func FillHandler(
 
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.WriteHeader(http.StatusOK)
+
 	_, err = w.Write(image)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Failed to write response: %s", err.Error()))
