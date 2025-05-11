@@ -14,10 +14,11 @@ RUN export GOPATH=$PWD/.cache && \
   go mod download -x && \
   CGO_ENABLED=0 GOOS=linux go build -o server -ldflags "$LDFLAGS" ./cmd/server/main.go
 
-FROM alpine:3.9
+FROM alpine:3.21
 
 COPY --from=builder /app/server /app/server
 COPY --from=builder /app/.env /app/.env
+COPY --from=builder /app/tmp /app/tmp
 
 WORKDIR /app
 
