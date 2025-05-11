@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestIntegrationContainers(t *testing.T) {
@@ -33,7 +34,7 @@ func TestIntegrationContainers(t *testing.T) {
 	testcontainers.CleanupContainer(t, nginxC)
 	require.NoError(t, err, "failed to start nginx container")
 
-	resp, err := http.Get(nginxC.URI + "/photo/05.jpg") //nolint:all
+	resp, err := http.Get(nginxC.URI) //nolint:all
 	require.NoError(t, err, "failed HTTP GET to nginx container")
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -67,23 +68,41 @@ func TestIntegrationContainers(t *testing.T) {
 	// Table tests
 	// -------------------------------------------
 
-	t.Run("Get image success", func(t *testing.T) {
-		url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/01.jpg", appC.URI)
+	startNoCached := time.Now()
+	t.Run("Get images", func(t *testing.T) {
+		imgGoAround(t, appC)
+	})
+	elapsedNoCached := time.Since(startNoCached)
 
-		resp, err := http.Get(url) //nolint:all
-		require.NoError(t, err, "failed to get image from app container")
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				require.NoError(t, err)
-			}
-		}(resp.Body)
+	startCached := time.Now()
+	t.Run("Get cached images", func(t *testing.T) {
+		imgGoAround(t, appC)
+	})
+	elapsedCached := time.Since(startCached)
 
-		require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected HTTP status code of app container")
+	require.Less(t, float64(elapsedCached), float64(elapsedNoCached/5), "some images are not cached")
+}
 
-		actualImage, _ := io.ReadAll(resp.Body)
-		expectedImage, _ := os.ReadFile("testdata/01.jpg")
+func imgGoAround(t *testing.T, appC *appContainer) {
+	t.Run("Go around", func(t *testing.T) {
+		for i := 1; i <= 5; i++ {
+			url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/0%d.jpg", appC.URI, i)
 
-		require.Equal(t, expectedImage, actualImage, "unexpected image content")
+			resp, err := http.Get(url) //nolint:all
+			require.NoError(t, err, "failed to get image from app container")
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					require.NoError(t, err)
+				}
+			}(resp.Body)
+
+			require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected HTTP status code of app container")
+
+			actualImage, _ := io.ReadAll(resp.Body)
+			expectedImage, _ := os.ReadFile(fmt.Sprintf("testdata/0%d.jpg", i))
+
+			require.Equal(t, expectedImage, actualImage, "unexpected image content")
+		}
 	})
 }
