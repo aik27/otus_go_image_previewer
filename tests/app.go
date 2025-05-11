@@ -24,7 +24,7 @@ func startAppContainer(ctx context.Context, networkName string) (*appContainer, 
 		FromDockerfile: testcontainers.FromDockerfile{
 			Dockerfile: dockerFile,
 			Context:    contextPath,
-			KeepImage:  true,
+			KeepImage:  false,
 		},
 		ExposedPorts: []string{"8081/tcp"},
 		WaitingFor:   wait.ForHTTP("/").WithStartupTimeout(10 * time.Second).WithPort("8081/tcp"),

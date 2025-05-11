@@ -2,11 +2,19 @@ package proxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"strings"
+)
+
+var (
+	ErrHTTPStatus                    = errors.New("unexpected HTTP status")
+	ErrRequestError                  = errors.New("http request error")
+	ErrUnableToCloseResponseBody     = errors.New("unable to close response body")
+	ErrUnableToReadImageFromResponse = errors.New("unable to read image from response body")
 )
 
 type Client struct {
@@ -40,7 +48,7 @@ func (p *Client) newHTTPRequest(url string, r *http.Request) *http.Request {
 	return prxReq
 }
 
-func (p *Client) FetchFile(url string, r *http.Request) ([]byte, error) {
+func (p *Client) FetchFile(url string, r *http.Request) ([]byte, int, error) {
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = fmt.Sprintf("http://%s", url)
 	}
@@ -51,31 +59,37 @@ func (p *Client) FetchFile(url string, r *http.Request) ([]byte, error) {
 
 	res, err := http.DefaultClient.Do(req) //nolint:bodyclose
 	if err != nil {
-		return nil, fmt.Errorf("error fetching remote http image: %w", err)
+		return nil,
+			http.StatusInternalServerError,
+			errors.Join(ErrRequestError, err)
 	}
 
 	defer func(Body io.ReadCloser) {
-		closeErr := Body.Close()
-		if closeErr != nil {
-			slog.Error(fmt.Sprintf("unable to close response body: %s", closeErr))
+		if Body != nil {
+			closeErr := Body.Close()
+			if closeErr != nil {
+				slog.Error(errors.Join(ErrUnableToCloseResponseBody, closeErr).Error())
+			}
 		}
 	}(res.Body)
 
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf(
-			fmt.Sprintf(
-				"error fetching remote http image: (status=%d) (url=%s)",
+	if res.StatusCode != http.StatusOK {
+		return nil,
+			res.StatusCode,
+			fmt.Errorf(
+				"%w: (status=%d) (url=%s)",
+				ErrHTTPStatus,
 				res.StatusCode,
 				req.URL.String(),
-			),
-			res.StatusCode,
-		)
+			)
 	}
 
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create image from response body: %w (url=%s)", err, req.URL.String())
+		return nil,
+			http.StatusInternalServerError,
+			errors.Join(ErrUnableToReadImageFromResponse, err)
 	}
 
-	return buf, nil
+	return buf, http.StatusOK, nil
 }

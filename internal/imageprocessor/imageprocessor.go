@@ -25,3 +25,11 @@ func Resize(img []byte, width int, height int) ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+func GetImageDimensions(imgData []byte) (int, int, error) {
+	img, _, err := image.DecodeConfig(bytes.NewReader(imgData))
+	if err != nil {
+		return 0, 0, err
+	}
+	return img.Width, img.Height, nil
+}

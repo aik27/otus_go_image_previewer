@@ -34,13 +34,13 @@ func FillHandler(
 	imgURL := chi.URLParam(r, "*")
 
 	wInt, err := strconv.Atoi(width)
-	if err != nil {
+	if err != nil || wInt < cfg.Image.PreviewMinWidth {
 		http.Error(w, "Invalid width value", http.StatusBadRequest)
 		return
 	}
 
 	hInt, err := strconv.Atoi(height)
-	if err != nil {
+	if err != nil || wInt < cfg.Image.PreviewMinHeight {
 		http.Error(w, "Invalid height value", http.StatusBadRequest)
 		return
 	}
@@ -78,16 +78,23 @@ func FillHandler(
 		return
 	}
 
-	image, err := proxyClient.FetchFile(imgURL, r)
+	image, status, err := proxyClient.FetchFile(imgURL, r)
 	if err != nil {
-		http.Error(w, "Failed to fetch image", http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch image", status)
 		slog.Error(fmt.Sprintf("Failed to fetch image: %s", err.Error()))
+		return
+	}
+
+	sWidth, sHeight, _ := imageprocessor.GetImageDimensions(image)
+	if sWidth < cfg.Image.SourceMinWidth || sHeight < cfg.Image.SourceMinHeight {
+		http.Error(w, "Image too small", http.StatusBadRequest)
 		return
 	}
 
 	image, err = imageprocessor.Resize(image, wInt, hInt)
 	if err != nil {
-		http.Error(w, "Failed to modify image.", http.StatusInternalServerError)
+		http.Error(w, "Failed to modify image", http.StatusInternalServerError)
+		slog.Error(fmt.Sprintf("Failed to modify image: %s", err.Error()))
 		return
 	}
 

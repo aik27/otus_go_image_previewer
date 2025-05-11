@@ -32,6 +32,13 @@ type Config struct {
 		Dir      string `env:"CACHE_DIR" validate:"required"`
 		Capacity int    `env:"CACHE_CAPACITY" validate:"required,numeric"`
 	}
+
+	Image struct {
+		SourceMinWidth   int `env:"IMAGE_SOURCE_MIN_WIDTH" validate:"required,numeric"`
+		SourceMinHeight  int `env:"IMAGE_SOURCE_MIN_HEIGHT" validate:"required,numeric"`
+		PreviewMinWidth  int `env:"IMAGE_PREVIEW_MIN_WIDTH" validate:"required,numeric"`
+		PreviewMinHeight int `env:"IMAGE_PREVIEW_MIN_HEIGHT" validate:"required,numeric"`
+	}
 }
 
 func Load() *Config {

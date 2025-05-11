@@ -36,13 +36,6 @@ func TestIntegrationContainers(t *testing.T) {
 
 	resp, err := http.Get(nginxC.URI) //nolint:all
 	require.NoError(t, err, "failed HTTP GET to nginx container")
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			require.NoError(t, err)
-		}
-	}(resp.Body)
-
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected HTTP status code of nginx container")
 
 	// -------------------------------------------
@@ -55,17 +48,10 @@ func TestIntegrationContainers(t *testing.T) {
 
 	resp, appErr = http.Get(appC.URI) //nolint:all
 	require.NoError(t, appErr, "failed HTTP GET to app container")
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			require.NoError(t, err)
-		}
-	}(resp.Body)
-
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected HTTP status code of app container")
 
 	// -------------------------------------------
-	// Table tests
+	// Positive
 	// -------------------------------------------
 
 	startNoCached := time.Now()
@@ -81,28 +67,64 @@ func TestIntegrationContainers(t *testing.T) {
 	elapsedCached := time.Since(startCached)
 
 	require.Less(t, float64(elapsedCached), float64(elapsedNoCached/5), "some images are not cached")
+
+	// -------------------------------------------
+	// Negative
+	// -------------------------------------------
+
+	t.Run("Remote server is unreachable", func(t *testing.T) {
+		url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/01.jpg", "http://unreachable-fake123.local")
+		_, err := http.Get(url) //nolint:all
+		require.Error(t, err)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/fake.jpg", appC.URI)
+		resp, err := http.Get(url) //nolint:all
+		require.NoError(t, err)
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("Only JPG support", func(t *testing.T) {
+		url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/01.exe", appC.URI)
+		resp, err := http.Get(url) //nolint:all
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Invalid review image size", func(t *testing.T) {
+		url := fmt.Sprintf("%s/fill/50/50/nginx:80/photo/01.jpg", appC.URI)
+		resp, err := http.Get(url) //nolint:all
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Invalid source image size", func(t *testing.T) {
+		url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/05_invalid_size.jpg", appC.URI)
+		resp, err := http.Get(url) //nolint:all
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 }
 
 func imgGoAround(t *testing.T, appC *appContainer) {
-	t.Run("Go around", func(t *testing.T) {
-		for i := 1; i <= 5; i++ {
-			url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/0%d.jpg", appC.URI, i)
+	for i := 1; i <= 5; i++ {
+		url := fmt.Sprintf("%s/fill/300/200/nginx:80/photo/0%d.jpg", appC.URI, i)
 
-			resp, err := http.Get(url) //nolint:all
-			require.NoError(t, err, "failed to get image from app container")
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					require.NoError(t, err)
-				}
-			}(resp.Body)
+		resp, err := http.Get(url) //nolint:all
+		require.NoError(t, err, "failed to get image from app container")
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				require.NoError(t, err)
+			}
+		}(resp.Body)
 
-			require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected HTTP status code of app container")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected HTTP status code of app container")
 
-			actualImage, _ := io.ReadAll(resp.Body)
-			expectedImage, _ := os.ReadFile(fmt.Sprintf("testdata/0%d.jpg", i))
+		actualImage, _ := io.ReadAll(resp.Body)
+		expectedImage, _ := os.ReadFile(fmt.Sprintf("testdata/0%d.jpg", i))
 
-			require.Equal(t, expectedImage, actualImage, "unexpected image content")
-		}
-	})
+		require.Equal(t, expectedImage, actualImage, "unexpected image content")
+	}
 }
