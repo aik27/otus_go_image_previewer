@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrHTTPStatus                    = errors.New("unexpected HTTP status")
-	ErrRequestError                  = errors.New("http request error")
+	ErrHTTPRequestError              = errors.New("http request error")
+	ErrHTTPRequestUnexpectedStatus   = errors.New("unexpected HTTP status")
 	ErrUnableToCloseResponseBody     = errors.New("unable to close response body")
 	ErrUnableToReadImageFromResponse = errors.New("unable to read image from response body")
 )
@@ -61,7 +61,7 @@ func (p *Client) FetchFile(url string, r *http.Request) ([]byte, int, error) {
 	if err != nil {
 		return nil,
 			http.StatusInternalServerError,
-			errors.Join(ErrRequestError, err)
+			errors.Join(ErrHTTPRequestError, err)
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -78,7 +78,7 @@ func (p *Client) FetchFile(url string, r *http.Request) ([]byte, int, error) {
 			res.StatusCode,
 			fmt.Errorf(
 				"%w: (status=%d) (url=%s)",
-				ErrHTTPStatus,
+				ErrHTTPRequestUnexpectedStatus,
 				res.StatusCode,
 				req.URL.String(),
 			)
