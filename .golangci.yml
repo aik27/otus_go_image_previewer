@@ -1,0 +1,101 @@
+version: "2"
+run:
+  tests: true
+linters:
+  default: none
+  enable:
+    - asciicheck
+    - bodyclose
+    - depguard
+    - dogsled
+    - dupl
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - funlen
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - tagliatelle
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+  settings:
+    funlen:
+      lines: 150
+      statements: 80
+    depguard:
+      rules:
+        Main:
+          files:
+            - $all
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/aik27/otus_go_image_previewer
+            - github.com/go-playground/validator/v10
+            - github.com/ilyakaznacheev/cleanenv
+            - github.com/go-chi/chi/v5
+            - github.com/go-chi/chi/v5/middleware
+            - github.com/go-chi/render
+            - github.com/disintegration/imaging
+            - github.com/testcontainers/testcontainers-go
+            - github.com/testcontainers/testcontainers-go/wait
+        Test:
+          files:
+            - $test
+          allow:
+            - $gostd
+            - github.com/stretchr/testify
+            - github.com/aik27/otus_go_image_previewer
+            - github.com/testcontainers/testcontainers-go
+            - github.com/testcontainers/testcontainers-go/wait
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

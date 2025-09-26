@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: ./.docker/app/Dockerfile
+    hostname: otus_image_previewer_app
+    container_name: otus_image_previewer_app
+    networks:
+      - otus_image_previewer_network
+    ports:
+      - "$HTTP_SERVER_LISTEN_PORT:$HTTP_SERVER_LISTEN_PORT"
+
+  nginx:
+    image: nginx:1.28
+    hostname: otus_image_previewer_nginx
+    container_name: otus_image_previewer_nginx
+    networks:
+      - otus_image_previewer_network
+    ports:
+      - "9094:80"
+    volumes:
+      - .docker/nginx/var/www/html:/var/www/html
+      - .docker/nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - .docker/nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+
+networks:
+  otus_image_previewer_network:
+    name: otus_image_previewer_network
+    driver: bridge
